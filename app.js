@@ -4,10 +4,21 @@
  * 不许自己再写一遍公式——两份实现迟早会跑偏。
  */
 const STORAGE_KEY = 'assetRebalanceData_v1';
+const MIN_ASSETS = 1;
+const MAX_ASSETS = 50;
+
 let rebalanceResults = [];
 let convertResults = [];
 
 const fmtMoney = x => Number(x).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// 把用户输入的名字安全地塞进 innerHTML（名字里可能有 < > " &）
+const esc = s => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 // localStorage 降级封装：隐私模式下不崩溃
 const safeStorage = {
@@ -32,73 +43,87 @@ window.onload = function () {
 };
 
 function createAssetInputs(savedAssets) {
-    const count = parseInt(document.getElementById('assetCount').value) || 1;
+    const countInput = document.getElementById('assetCount');
+    let count = parseInt(countInput.value, 10);
+    if (!Number.isFinite(count)) count = 1;
+    count = Math.min(MAX_ASSETS, Math.max(MIN_ASSETS, count));
+    countInput.value = count;
+    countInput.min = MIN_ASSETS;
+    countInput.max = MAX_ASSETS;
+
     const container = document.getElementById('assetInputs');
     container.innerHTML = '';
+
+    // 默认比例合计必须正好 100%，否则第一次点计算就报错
+    const defaultRatios = Core.defaultRatioBp(count);
     const saveArr = [];
 
     for (let i = 0; i < count; i++) {
-        const saved = savedAssets && savedAssets[i] ? savedAssets[i] : null;
-        const name = saved ? saved.name : `资产${i + 1}`;
-        const buyFeeRate = saved && typeof saved.buyFeeRate !== 'undefined' ? Number(saved.buyFeeRate) : 0.50;
-        const targetRatio = saved && typeof saved.targetRatio !== 'undefined' ? Number(saved.targetRatio) : Math.max(0, Math.round(100 / count));
-        const currentValue = 10000 + i * 5000;
-        const currentPrice = parseFloat((1 + i * 0.5).toFixed(4));
+        // 有存过就用存的原样（包括她清空成空白的情况），没有才给默认值
+        const saved = savedAssets && savedAssets[i] ? savedAssets[i] : {};
+        const pick = (key, fallback) =>
+            (saved[key] === undefined || saved[key] === null) ? fallback : String(saved[key]);
 
-        saveArr.push({ name, targetRatio, buyFeeRate });
+        const name = pick('name', `资产${i + 1}`);
+        const currentValue = pick('currentValue', String(10000 + i * 5000));
+        const targetRatio = pick('targetRatio', String(defaultRatios[i] / 100));
+        const buyFeeRate = pick('buyFeeRate', '0.50');
+        const sellFeeRate = pick('sellFeeRate', '0');
+        const currentPrice = pick('currentPrice', (1 + i * 0.5).toFixed(4));
+
+        saveArr.push({ name, currentValue, targetRatio, buyFeeRate, sellFeeRate, currentPrice });
 
         const div = document.createElement('div');
         div.className = 'asset-item';
         div.innerHTML = `
             <h4 style="margin:0 0 8px 0;">第 ${i + 1} 类资产</h4>
-            <label>资产名称：</label><input type="text" class="assetName" value="${name}">
-            <label>当前市值（元）：</label><input type="number" class="currentValue" min="0" step="0.01" value="${currentValue}">
-            <label>目标配置比例（%）：</label><input type="number" class="targetRatio" min="0" max="100" step="0.1" value="${targetRatio}">
-            <label>买入手续费率（%）：</label><input type="number" class="buyFeeRate" min="0" step="0.01" value="${buyFeeRate.toFixed(2)}">
-            <label>当前价格（元/份）：</label><input type="number" class="currentPrice" min="0.0001" step="0.0001" value="${currentPrice}">
-            <div class="tip">注意：这里显示为百分比（例如输入 0.50 表示 0.50%），保存时会以数字形式完整保存。</div>
+            <label>资产名称：</label><input type="text" class="assetName" value="${esc(name)}">
+            <label>当前市值（元）：</label><input type="number" class="currentValue" min="0" step="0.01" value="${esc(currentValue)}">
+            <label>目标配置比例（%）：</label><input type="number" class="targetRatio" min="0" max="100" step="0.01" value="${esc(targetRatio)}">
+            <label>买入手续费率（%）：</label><input type="number" class="buyFeeRate" min="0" step="0.01" value="${esc(buyFeeRate)}">
+            <label>卖出费率（%）：</label><input type="number" class="sellFeeRate" min="0" step="0.01" value="${esc(sellFeeRate)}">
+            <label>当前价格（元/份）：</label><input type="number" class="currentPrice" min="0.0001" step="0.0001" value="${esc(currentPrice)}">
+            <div class="tip">费率填百分数：0.50 表示 0.50%。卖出费率多数情况下填 0，卖出不收费就留 0。</div>
         `;
         container.appendChild(div);
     }
 
     saveDataToStorage(saveArr);
 
-    document.querySelectorAll('.asset-item').forEach((item) => {
-        const nameInp = item.querySelector('.assetName');
-        const ratioInp = item.querySelector('.targetRatio');
-        const feeInp = item.querySelector('.buyFeeRate');
-
-        const handleSave = () => {
-            const assets = Array.from(document.querySelectorAll('.asset-item')).map((it, j) => {
-                const n = it.querySelector('.assetName').value.trim() || `资产${j + 1}`;
-                const r = parseFloat(it.querySelector('.targetRatio').value);
-                const f = parseFloat(it.querySelector('.buyFeeRate').value);
-                return { name: n, targetRatio: isNaN(r) ? 0 : r, buyFeeRate: isNaN(f) ? 0 : f };
-            });
-            saveDataToStorage(assets);
-        };
-
-        nameInp.addEventListener('input', handleSave);
-        ratioInp.addEventListener('input', handleSave);
-        feeInp.addEventListener('input', handleSave);
+    // 改了任何一格就顺手存一下，下次打开还是这些值
+    document.querySelectorAll('.asset-item input').forEach((inp) => {
+        inp.addEventListener('input', () => saveDataFromDom());
     });
 }
 
-// 重新生成输入时，保留当前已填的名称/比例/费率
+// 重新生成输入时，保留当前已填的全部数值
 function regenerateAssets() {
-    const items = Array.from(document.querySelectorAll('.asset-item')).map((it, j) => ({
-        name: it.querySelector('.assetName').value.trim() || `资产${j + 1}`,
-        targetRatio: parseFloat(it.querySelector('.targetRatio').value),
-        buyFeeRate: parseFloat(it.querySelector('.buyFeeRate').value),
+    createAssetInputs(collectAssetsFromDom());
+}
+
+function collectAssetsFromDom() {
+    return Array.from(document.querySelectorAll('.asset-item')).map((item, idx) => ({
+        name: item.querySelector('.assetName').value.trim() || `资产${idx + 1}`,
+        currentValue: item.querySelector('.currentValue').value,
+        targetRatio: item.querySelector('.targetRatio').value,
+        buyFeeRate: item.querySelector('.buyFeeRate').value,
+        sellFeeRate: item.querySelector('.sellFeeRate').value,
+        currentPrice: item.querySelector('.currentPrice').value,
     }));
-    createAssetInputs(items);
+}
+
+function saveDataFromDom() {
+    saveDataToStorage(collectAssetsFromDom());
 }
 
 function saveDataToStorage(assets) {
     const normalized = assets.map(a => ({
         name: String(a.name || ''),
-        targetRatio: Number(isNaN(a.targetRatio) ? 0 : a.targetRatio),
-        buyFeeRate: Number(isNaN(a.buyFeeRate) ? 0 : a.buyFeeRate),
+        currentValue: String(a.currentValue == null ? '' : a.currentValue),
+        targetRatio: String(a.targetRatio == null ? '' : a.targetRatio),
+        buyFeeRate: String(a.buyFeeRate == null ? '0' : a.buyFeeRate),
+        sellFeeRate: String(a.sellFeeRate == null ? '0' : a.sellFeeRate),
+        currentPrice: String(a.currentPrice == null ? '' : a.currentPrice),
     }));
     safeStorage.set(STORAGE_KEY, JSON.stringify({ assetCount: normalized.length, assets: normalized }));
 }
@@ -124,52 +149,72 @@ function clearStoredData() {
     }
 }
 
-/* 把界面上的输入收成一串数字，交给 core.js 算 */
+/* 把界面上的输入交给 core.js 校验并转成整数。
+ * 界面的字段名是给人看的（currentValue / targetRatio / buyFeeRate），
+ * core.js 的字段名是给公式用的（current / ratioPct / buyFeePct），这里做一次翻译。
+ */
 function readAssetsFromDom() {
-    const items = document.querySelectorAll('.asset-item');
-    return Array.from(items).map((item, idx) => Core.parseAsset({
-        name: item.querySelector('.assetName').value,
-        current: item.querySelector('.currentValue').value,
-        ratioPct: item.querySelector('.targetRatio').value,
-        feePct: item.querySelector('.buyFeeRate').value,
-        price: item.querySelector('.currentPrice').value,
-    }, idx));
+    const mapped = collectAssetsFromDom().map(a => ({
+        name: a.name,
+        current: a.currentValue,
+        ratioPct: a.targetRatio,
+        buyFeePct: a.buyFeeRate,
+        sellFeePct: a.sellFeeRate,
+        price: a.currentPrice,
+    }));
+    return Core.readAssets(mapped);
 }
 
 function calculateRebalance() {
     const items = document.querySelectorAll('.asset-item');
     if (!items || items.length === 0) return alert('请先生成资产输入项');
 
-    const assets = readAssetsFromDom();
-    const result = Core.computeRebalance(assets);
+    const parsed = readAssetsFromDom();
+    if (!parsed.ok) return alert(parsed.error);
+
+    const result = Core.computeRebalance(parsed.assets);
     if (!result.ok) return alert(result.error);
 
     rebalanceResults = result.rows;
-    convertResults = Core.generateConvertPlan(rebalanceResults, assets);
-    renderRebalanceResult(result.totalAsset);
+    convertResults = Core.generateConvertPlan(rebalanceResults);
+    renderRebalanceResult(result.totalCents);
     renderConvertPlan();
 }
 
-function renderRebalanceResult(totalAsset) {
+function renderRebalanceResult(totalCents) {
     document.getElementById('totalAsset').innerHTML =
-        `总资产　<strong>${fmtMoney(totalAsset)} 元</strong>`;
-    const headers = ['资产名称', '当前市值(元)', '目标市值(元)', '买入手续费率(%)', '当前价格(元/份)', '操作类型', '操作金额(元)', '份额(份)'];
+        `总资产　<strong>${fmtMoney(totalCents / 100)} 元</strong>`;
+
+    const headers = ['资产名称', '当前市值(元)', '目标市值(元)', '操作', '交易金额(元)', '手续费(元)', '实际现金流(元)', '份额(份)'];
     let html = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+
     rebalanceResults.forEach(r => {
-        const actionClass = r.action === '卖出' ? 'sell' : (r.action === '买入' ? 'buy' : '');
-        const amountDisplay = r.action === '无' ? '—' : fmtMoney(r.amount);
+        const cls = r.action === '卖出' ? 'sell' : (r.action === '买入' ? 'buy' : '');
+        const dash = r.action === '无';
         html += `<tr>
-            <td>${r.name}</td>
+            <td>${esc(r.name)}</td>
             <td>${fmtMoney(r.current)}</td>
             <td>${fmtMoney(r.target)}</td>
-            <td>${r.feePct}</td>
-            <td>${r.price}</td>
-            <td class="${actionClass}">${r.action}</td>
-            <td class="${actionClass}">${amountDisplay}</td>
-            <td>${r.shares}</td>
+            <td class="${cls}">${r.action}</td>
+            <td class="${cls}">${dash ? '—' : fmtMoney(r.amount)}</td>
+            <td>${dash ? '—' : fmtMoney(r.fee)}</td>
+            <td class="${cls}">${dash ? '—' : fmtMoney(r.cash)}</td>
+            <td>${esc(r.shares)}</td>
         </tr>`;
     });
     document.getElementById('resultTable').innerHTML = html;
+
+    // 一句话总结：钱够不够
+    const sellCash = rebalanceResults.filter(r => r.action === '卖出').reduce((s, r) => s + r.cashCents, 0);
+    const buyCash = rebalanceResults.filter(r => r.action === '买入').reduce((s, r) => s + r.cashCents, 0);
+    const gap = buyCash - sellCash;
+    const summary = gap > 0
+        ? `卖出到账 ${fmtMoney(sellCash / 100)} 元，买入需掏 ${fmtMoney(buyCash / 100)} 元，<span style="color:var(--red);font-weight:600;">还差 ${fmtMoney(gap / 100)} 元需要额外投入</span>`
+        : gap < 0
+            ? `卖出到账 ${fmtMoney(sellCash / 100)} 元，买入需掏 ${fmtMoney(buyCash / 100)} 元，<span style="color:var(--green);font-weight:600;">富余 ${fmtMoney(-gap / 100)} 元可留在手上</span>`
+            : `卖出到账与买入支出正好相等：${fmtMoney(sellCash / 100)} 元，不用额外掏钱`;
+    document.getElementById('cashSummary').innerHTML = summary;
+
     document.getElementById('resultArea').style.display = 'block';
 }
 
@@ -180,12 +225,12 @@ function renderConvertPlan() {
         const statusColor = r['转换状态'] === '需额外注入资金' ? 'color:var(--red);' :
                             r['转换状态'] === '内部资金匹配' ? 'color:var(--green);' : 'color:var(--ink-faint);';
         html += `<tr>
-            <td>${r['卖出资产']}</td>
+            <td>${esc(r['卖出资产'])}</td>
             <td>${fmtMoney(r['卖出金额(元)'])}</td>
-            <td style="color:var(--red);font-weight:600;">${r['卖出份额(份)']}</td>
-            <td>${r['买入资产']}</td>
+            <td style="color:var(--red);font-weight:600;">${esc(r['卖出份额(份)'])}</td>
+            <td>${esc(r['买入资产'])}</td>
             <td>${fmtMoney(r['买入金额(元)'])}</td>
-            <td style="${statusColor}font-weight:600;">${r['转换状态']}</td>
+            <td style="${statusColor}font-weight:600;">${esc(r['转换状态'])}</td>
         </tr>`;
     });
     document.getElementById('convertTable').innerHTML = html;
@@ -199,11 +244,14 @@ function exportExcel(type) {
             '资产名称': r.name,
             '当前市值(元)': r.current,
             '目标市值(元)': r.target,
-            '买入手续费率(%)': r.feePct,
-            '当前价格(元/份)': r.price,
-            '操作类型': r.action,
-            '操作金额(元)': r.amount,
+            '操作': r.action,
+            '交易金额(元)': r.amount,
+            '手续费(元)': r.fee,
+            '实际现金流(元)': r.cash,
             '份额(份)': r.shares,
+            '当前价格(元/份)': r.price,
+            '买入费率(%)': r.buyFeePct,
+            '卖出费率(%)': r.sellFeePct,
         }));
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(data);

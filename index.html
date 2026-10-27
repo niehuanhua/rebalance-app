@@ -129,7 +129,7 @@
             <button onclick="regenerateAssets()">确认并生成资产输入</button>
             <button class="clear-btn" onclick="clearStoredData()">清空保存的历史数据</button>
         </div>
-        <div class="tip">会保存「资产名称、目标配置比例、买入手续费率」到本地，下次打开自动恢复。价格/市值为每次输入。</div>
+        <div class="tip">输入的全部内容都会存在本机，下次打开自动恢复。卖出费率多数情况填 0（卖出不收费就留 0）。</div>
     </div>
 
     <div class="section" id="assetInputs"></div>
@@ -141,6 +141,7 @@
     <div class="section" id="resultArea" style="display:none;">
         <h3><span class="tag-num">1</span>再平衡计算结果</h3>
         <div id="totalAsset"></div>
+        <div id="cashSummary" style="font-size:13.5px;margin-bottom:12px;padding:10px 14px;background:var(--paper);border:1px solid var(--line);border-radius:9px;"></div>
         <div style="overflow-x:auto;"><table id="resultTable"></table></div>
         <div style="margin-top:14px;">
             <button onclick="exportExcel('rebalance')">导出再平衡结果到 Excel</button>
