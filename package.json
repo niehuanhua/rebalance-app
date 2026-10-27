@@ -1,0 +1,9 @@
+{
+  "name": "rebalance-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "资产再平衡计算器",
+  "scripts": {
+    "test": "node --test"
+  }
+}
