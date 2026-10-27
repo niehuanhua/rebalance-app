@@ -115,6 +115,62 @@
             border-radius: 10px; border: 1px solid var(--line);
         }
         #totalAsset strong { font-size: 19px; color: var(--teal-deep); font-weight: 600; }
+
+        /* ---------- 手机竖屏（窄屏）：表格改成一列卡片 ----------
+         * 桌面端完全不受影响：这些规则只在宽度 ≤ 720px 时生效。
+         * 宽度门槛取 720px 是为了让横放的平板也走卡片，横过来才用表格。
+         */
+        @media (max-width: 720px) {
+            body { padding: 20px 14px 64px; }
+            h1 { font-size: 21px; }
+            .subtitle { font-size: 12px; margin-bottom: 22px; }
+            .section { padding: 18px 14px; border-radius: 12px; }
+            .section h3 { font-size: 14px; }
+            .asset-item { padding: 14px; }
+
+            /* 输入框占满一行、字体 16px：手指好点，也不会被浏览器自作主张放大 */
+            label { display: block; margin: 12px 0 3px; font-size: 13px; }
+            input[type="number"], input[type="text"] {
+                width: 100%; margin: 0; font-size: 16px; padding: 11px 12px;
+            }
+            #assetCount { width: 100% !important; }
+
+            .controls { flex-direction: column; align-items: stretch; }
+            .controls button { width: 100%; }
+            button { font-size: 15px; padding: 12px 18px; min-height: 44px; }
+            .primary-action button { width: 100%; font-size: 16px; padding: 15px 18px; }
+            .clear-btn { margin-left: 0; }
+
+            #cashSummary { font-size: 14px !important; }
+
+            /* 表格 → 卡片。每个 <td> 变成「标签 + 数值」一行，
+             * 标签文字来自 app.js 写进 td 的 data-label。
+             */
+            table, tbody, tr, td, th { display: block; width: 100%; }
+            table { margin-top: 8px; font-size: 15px; }
+            tr.head-row { display: none; }
+            #resultTable tr, #convertTable tr {
+                margin: 0 0 12px; padding: 12px 14px; background: var(--paper);
+                border: 1px solid var(--line); border-left: 3px solid var(--teal);
+                border-radius: 10px;
+            }
+            #resultTable td, #convertTable td {
+                display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+                padding: 5px 0; border: none; text-align: right;
+            }
+            #resultTable td::before, #convertTable td::before {
+                content: attr(data-label); color: var(--ink-faint); font-size: 13px;
+                font-weight: 400; text-align: left; flex-shrink: 0;
+            }
+            /* 第一格是资产名，当卡片标题，不再重复标签 */
+            #resultTable td:first-child, #convertTable td:first-child {
+                display: block; text-align: left; font-size: 15.5px; font-weight: 600;
+                color: var(--teal-deep); padding: 0 0 9px; margin-bottom: 5px;
+                border-bottom: 1px solid var(--line);
+            }
+            #resultTable td:first-child::before, #convertTable td:first-child::before { display: none; }
+            tr:hover td { background: transparent; }
+        }
     </style>
 </head>
 <body>

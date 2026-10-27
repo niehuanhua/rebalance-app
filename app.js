@@ -185,22 +185,31 @@ function renderRebalanceResult(totalCents) {
     document.getElementById('totalAsset').innerHTML =
         `总资产　<strong>${fmtMoney(totalCents / 100)} 元</strong>`;
 
-    const headers = ['资产名称', '当前市值(元)', '目标市值(元)', '操作', '交易金额(元)', '手续费(元)', '实际现金流(元)', '份额(份)'];
-    let html = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    /* 列定义只写一遍：桌面端的表头、手机卡片的每一行标签（data-label）、
+     * 单元格内容都从这张表生成，避免三处各写一份、改了这里忘了那里。
+     * dashWhenIdle = 这一列在「无操作」时显示破折号，不留 0.00。
+     */
+    const cols = [
+        { title: '资产名称', text: r => esc(r.name) },
+        { title: '当前市值(元)', text: r => fmtMoney(r.current) },
+        { title: '目标市值(元)', text: r => fmtMoney(r.target) },
+        { title: '操作', text: r => r.action, tone: true },
+        { title: '交易金额(元)', text: r => fmtMoney(r.amount), tone: true, dashWhenIdle: true },
+        { title: '手续费(元)', text: r => fmtMoney(r.fee), dashWhenIdle: true },
+        { title: '实际现金流(元)', text: r => fmtMoney(r.cash), tone: true, dashWhenIdle: true },
+        { title: '份额(份)', text: r => esc(r.shares) },
+    ];
+
+    let html = '<tr class="head-row">' + cols.map(c => `<th>${c.title}</th>`).join('') + '</tr>';
 
     rebalanceResults.forEach(r => {
         const cls = r.action === '卖出' ? 'sell' : (r.action === '买入' ? 'buy' : '');
-        const dash = r.action === '无';
-        html += `<tr>
-            <td>${esc(r.name)}</td>
-            <td>${fmtMoney(r.current)}</td>
-            <td>${fmtMoney(r.target)}</td>
-            <td class="${cls}">${r.action}</td>
-            <td class="${cls}">${dash ? '—' : fmtMoney(r.amount)}</td>
-            <td>${dash ? '—' : fmtMoney(r.fee)}</td>
-            <td class="${cls}">${dash ? '—' : fmtMoney(r.cash)}</td>
-            <td>${esc(r.shares)}</td>
-        </tr>`;
+        const idle = r.action === '无';
+        html += '<tr>' + cols.map(c => {
+            const value = (c.dashWhenIdle && idle) ? '—' : c.text(r);
+            const klass = c.tone ? ` class="${cls}"` : '';
+            return `<td data-label="${c.title}"${klass}>${value}</td>`;
+        }).join('') + '</tr>';
     });
     document.getElementById('resultTable').innerHTML = html;
 
@@ -219,19 +228,24 @@ function renderRebalanceResult(totalCents) {
 }
 
 function renderConvertPlan() {
-    const headers = ['卖出资产', '卖出金额(元)', '卖出份额(份)', '买入资产', '买入金额(元)', '转换状态'];
-    let html = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    const cols = [
+        { title: '卖出资产', text: r => esc(r['卖出资产']) },
+        { title: '卖出金额(元)', text: r => fmtMoney(r['卖出金额(元)']) },
+        { title: '卖出份额(份)', text: r => esc(r['卖出份额(份)']), style: 'color:var(--red);font-weight:600;' },
+        { title: '买入资产', text: r => esc(r['买入资产']) },
+        { title: '买入金额(元)', text: r => fmtMoney(r['买入金额(元)']) },
+        { title: '转换状态', text: r => esc(r['转换状态']), status: true },
+    ];
+
+    let html = '<tr class="head-row">' + cols.map(c => `<th>${c.title}</th>`).join('') + '</tr>';
     convertResults.forEach(r => {
-        const statusColor = r['转换状态'] === '需额外注入资金' ? 'color:var(--red);' :
-                            r['转换状态'] === '内部资金匹配' ? 'color:var(--green);' : 'color:var(--ink-faint);';
-        html += `<tr>
-            <td>${esc(r['卖出资产'])}</td>
-            <td>${fmtMoney(r['卖出金额(元)'])}</td>
-            <td style="color:var(--red);font-weight:600;">${esc(r['卖出份额(份)'])}</td>
-            <td>${esc(r['买入资产'])}</td>
-            <td>${fmtMoney(r['买入金额(元)'])}</td>
-            <td style="${statusColor}font-weight:600;">${esc(r['转换状态'])}</td>
-        </tr>`;
+        const statusColor = r['转换状态'] === '需额外注入资金' ? 'color:var(--red);font-weight:600;' :
+                            r['转换状态'] === '内部资金匹配' ? 'color:var(--green);font-weight:600;' :
+                            'color:var(--ink-faint);font-weight:600;';
+        html += '<tr>' + cols.map(c => {
+            const style = c.status ? statusColor : (c.style || '');
+            return `<td data-label="${c.title}"${style ? ` style="${style}"` : ''}>${c.text(r)}</td>`;
+        }).join('') + '</tr>';
     });
     document.getElementById('convertTable').innerHTML = html;
     document.getElementById('convertArea').style.display = 'block';
