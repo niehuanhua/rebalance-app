@@ -6,7 +6,7 @@
  *
  * 改了这个文件一定要改 VERSION，否则手机上的旧缓存不会被清掉。
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `rebalance-${VERSION}`;
 
 // 只要有一个文件 404，整个安装就会失败（缓存是整批写入的）。
@@ -15,6 +15,8 @@ const SHELL = [
   './',
   './index.html',
   './manifest.json',
+  './core.js',
+  './app.js',
   './vendor/xlsx.full.min.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
