@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#1b2430"/>
+
+  <!-- 向右的箭头：买入 -->
+  <g fill="none" stroke="#f2c14e" stroke-width="48" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 196 H340"/>
+    <path d="M316 156 L376 196 L316 236"/>
+  </g>
+
+  <!-- 向左的箭头：卖出 -->
+  <g fill="none" stroke="#5ec79b" stroke-width="48" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M372 316 H172"/>
+    <path d="M196 276 L136 316 L196 356"/>
+  </g>
+</svg>
