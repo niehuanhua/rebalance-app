@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>资产再平衡 + 资产转换规划</title>
+    <style>
+        :root {
+            --ink: #1b2430;
+            --ink-soft: #5b6675;
+            --ink-faint: #9aa3b0;
+            --paper: #fbfaf7;
+            --card: #ffffff;
+            --line: #e7e4dc;
+            --teal: #0f5c50;
+            --teal-deep: #0a443b;
+            --teal-tint: #eaf3f0;
+            --gold: #b8893f;
+            --gold-tint: #f7f0e3;
+            --red: #b3433a;
+            --red-tint: #f8eceb;
+            --green: #2f7d4f;
+            --green-tint: #ecf5ef;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+            max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px;
+            background: var(--paper); color: var(--ink); line-height: 1.6;
+        }
+        h1 {
+            text-align: center; font-size: 26px; font-weight: 600; letter-spacing: .5px;
+            color: var(--teal-deep); margin: 0 0 6px;
+        }
+        h1::after {
+            content: ""; display: block; width: 56px; height: 3px; background: var(--gold);
+            margin: 14px auto 0; border-radius: 2px;
+        }
+        .subtitle { text-align: center; color: var(--ink-faint); font-size: 13px; margin-bottom: 36px; letter-spacing: .3px; }
+
+        .section {
+            margin: 22px 0; padding: 24px 26px; background: var(--card);
+            border: 1px solid var(--line); border-radius: 14px;
+            box-shadow: 0 1px 2px rgba(27,36,48,0.03), 0 8px 24px rgba(27,36,48,0.03);
+        }
+        .section h3 {
+            font-size: 15px; font-weight: 600; margin: 0 0 16px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px;
+        }
+        .section h3 .tag-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 600;
+            background: var(--teal); color: #fff; flex-shrink: 0;
+        }
+
+        .asset-item {
+            margin: 14px 0; padding: 16px 18px; background: var(--paper);
+            border-radius: 10px; border: 1px solid var(--line); border-left: 3px solid var(--teal);
+            transition: border-color .15s ease;
+        }
+        .asset-item:hover { border-left-color: var(--gold); }
+        .asset-item h4 { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: var(--teal-deep); letter-spacing: .3px; }
+
+        label { font-size: 13px; color: var(--ink-soft); margin-right: 4px; }
+
+        button {
+            padding: 9px 20px; cursor: pointer; background: var(--teal); color: #fff;
+            border: none; border-radius: 8px; font-size: 13.5px; font-weight: 500;
+            letter-spacing: .2px; transition: background .15s ease, transform .1s ease;
+        }
+        button:hover { background: var(--teal-deep); }
+        button:active { transform: scale(.98); }
+        .clear-btn { background: transparent; color: var(--red); border: 1px solid #e3c6c3; margin-left: 4px; }
+        .clear-btn:hover { background: var(--red-tint); }
+        .primary-action { display: flex; justify-content: center; margin: 28px 0; }
+        .primary-action button { padding: 12px 36px; font-size: 14.5px; border-radius: 10px; box-shadow: 0 4px 14px rgba(15,92,80,0.25); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
+        th, td { padding: 11px 10px; text-align: center; }
+        th {
+            background: var(--teal-tint); color: var(--teal-deep); font-weight: 600;
+            font-size: 12.5px; letter-spacing: .2px; border-bottom: 1px solid var(--line);
+        }
+        td { border-bottom: 1px solid var(--line); color: var(--ink); }
+        tbody tr:hover td, tr:hover td { background: rgba(15,92,80,0.035); }
+        tr:last-child td { border-bottom: none; }
+
+        input[type="number"], input[type="text"] {
+            padding: 8px 10px; margin: 4px 10px 8px 0; border: 1px solid var(--line);
+            border-radius: 7px; width: 150px; font-size: 13.5px; background: var(--card);
+            color: var(--ink); transition: border-color .15s ease;
+        }
+        input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,92,80,0.1); }
+
+        .tip {
+            color: var(--ink-faint); font-size: 12.5px; margin-top: 10px;
+            padding: 8px 12px; background: var(--gold-tint); border-radius: 7px;
+            border-left: 2px solid var(--gold);
+        }
+        .convert-section { }
+        .controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+        td.sell { color: var(--red); font-weight: 600; }
+        td.buy  { color: var(--green); font-weight: 600; }
+
+        #totalAsset {
+            font-size: 14px; margin-bottom: 12px; padding: 14px 18px;
+            background: linear-gradient(135deg, var(--teal-tint), var(--card));
+            border-radius: 10px; border: 1px solid var(--line);
+        }
+        #totalAsset strong { font-size: 19px; color: var(--teal-deep); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <h1>资产再平衡计算器</h1>
+    <div class="subtitle">含资产转换规划 · 自动计算买卖份额与资金流向</div>
+
+    <div class="section">
+        <div class="controls">
+            <label>资产类别数量</label>
+            <input type="number" id="assetCount" min="1" value="3" style="width:80px;">
+            <button onclick="regenerateAssets()">确认并生成资产输入</button>
+            <button class="clear-btn" onclick="clearStoredData()">清空保存的历史数据</button>
+        </div>
+        <div class="tip">会保存「资产名称、目标配置比例、买入手续费率」到本地，下次打开自动恢复。价格/市值为每次输入。</div>
+    </div>
+
+    <div class="section" id="assetInputs"></div>
+
+    <div class="primary-action">
+        <button onclick="calculateRebalance()">开始计算再平衡并生成转换方案</button>
+    </div>
+
+    <div class="section" id="resultArea" style="display:none;">
+        <h3><span class="tag-num">1</span>再平衡计算结果</h3>
+        <div id="totalAsset"></div>
+        <div style="overflow-x:auto;"><table id="resultTable"></table></div>
+        <div style="margin-top:14px;">
+            <button onclick="exportExcel('rebalance')">导出再平衡结果到 Excel</button>
+        </div>
+    </div>
+
+    <div class="section convert-section" id="convertArea" style="display:none;">
+        <h3><span class="tag-num">2</span>资产转换规划（资金流向：卖出 → 买入）</h3>
+        <div id="convertTips" class="tip">转换策略：优先用卖出资金内部匹配买入需求；若卖出资金不足，则标注需外部注入资金。</div>
+        <div style="overflow-x:auto;"><table id="convertTable"></table></div>
+        <div style="margin-top:14px;">
+            <button onclick="exportExcel('convert')">导出转换方案到 Excel</button>
+        </div>
+    </div>
+
+    <!-- XLSX 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+    const STORAGE_KEY = 'assetRebalanceData_v1';
+    let rebalanceResults = [];
+    let convertResults = [];
+
+    // ✅ 改进3：统一 2 位小数（分）精度，避免整数四舍五入丢精度
+    const round2 = x => Math.round((Number(x) + Number.EPSILON) * 100) / 100;
+    const fmtMoney = x => Number(x).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // ✅ 修复6：localStorage 降级封装，隐私模式下不崩溃
+    const safeStorage = {
+        get(key) {
+            try { return localStorage.getItem(key); } catch(e) { return null; }
+        },
+        set(key, val) {
+            try { localStorage.setItem(key, val); } catch(e) {}
+        },
+        remove(key) {
+            try { localStorage.removeItem(key); } catch(e) {}
+        }
+    };
+
+    window.onload = function() {
+        if (typeof XLSX === 'undefined') {
+            alert('Excel 导出库加载失败');
+        }
+        loadStoredData();
+        const container = document.getElementById('assetInputs');
+        if (!container || container.innerHTML.trim() === '') createAssetInputs();
+    };
+
+    function createAssetInputs(savedAssets) {
+        const count = parseInt(document.getElementById('assetCount').value) || 1;
+        const container = document.getElementById('assetInputs');
+        container.innerHTML = '';
+        const saveArr = [];
+
+        for (let i = 0; i < count; i++) {
+            const saved = savedAssets && savedAssets[i] ? savedAssets[i] : null;
+            const name = saved ? saved.name : `资产${i+1}`;
+            const buyFeeRate = saved && typeof saved.buyFeeRate !== 'undefined' ? Number(saved.buyFeeRate) : 0.50;
+            const targetRatio = saved && typeof saved.targetRatio !== 'undefined' ? Number(saved.targetRatio) : Math.max(0, Math.round(100/count));
+            const currentValue = 10000 + i * 5000;
+            const currentPrice = parseFloat((1 + i * 0.5).toFixed(4));
+
+            saveArr.push({ name, targetRatio, buyFeeRate });
+
+            const div = document.createElement('div');
+            div.className = 'asset-item';
+            div.innerHTML = `
+                <h4 style="margin:0 0 8px 0;">第 ${i+1} 类资产</h4>
+                <label>资产名称：</label><input type="text" class="assetName" value="${name}">
+                <label>当前市值（元）：</label><input type="number" class="currentValue" min="0" step="0.01" value="${currentValue}">
+                <label>目标配置比例（%）：</label><input type="number" class="targetRatio" min="0" max="100" step="0.1" value="${targetRatio}">
+                <label>买入手续费率（%）：</label><input type="number" class="buyFeeRate" min="0" step="0.01" value="${buyFeeRate.toFixed(2)}">
+                <label>当前价格（元/份）：</label><input type="number" class="currentPrice" min="0.0001" step="0.0001" value="${currentPrice}">
+                <div class="tip">注意：这里显示为百分比（例如输入 0.50 表示 0.50%），保存时会以数字形式完整保存。</div>
+            `;
+            container.appendChild(div);
+        }
+
+        saveDataToStorage(saveArr);
+
+        document.querySelectorAll('.asset-item').forEach((item) => {
+            const nameInp = item.querySelector('.assetName');
+            const ratioInp = item.querySelector('.targetRatio');
+            const feeInp = item.querySelector('.buyFeeRate');
+
+            const handleSave = () => {
+                const assets = Array.from(document.querySelectorAll('.asset-item')).map((it, j) => {
+                    const n = it.querySelector('.assetName').value.trim() || `资产${j+1}`;
+                    const r = parseFloat(it.querySelector('.targetRatio').value);
+                    const f = parseFloat(it.querySelector('.buyFeeRate').value);
+                    return { name: n, targetRatio: isNaN(r) ? 0 : r, buyFeeRate: isNaN(f) ? 0 : f };
+                });
+                saveDataToStorage(assets);
+            };
+
+            nameInp.addEventListener('input', handleSave);
+            ratioInp.addEventListener('input', handleSave);
+            feeInp.addEventListener('input', handleSave);
+        });
+    }
+
+    // ✅ 改进1：重新生成输入时，保留当前已填的名称/比例/费率（不再用默认值覆盖已保存配置）
+    function regenerateAssets() {
+        const items = Array.from(document.querySelectorAll('.asset-item')).map((it, j) => ({
+            name: it.querySelector('.assetName').value.trim() || `资产${j+1}`,
+            targetRatio: parseFloat(it.querySelector('.targetRatio').value),
+            buyFeeRate: parseFloat(it.querySelector('.buyFeeRate').value)
+        }));
+        // 把当前输入作为“已保存数据”传入，createAssetInputs 会复用已有的、给新增的填默认
+        createAssetInputs(items);
+    }
+
+    function saveDataToStorage(assets) {
+        // ✅ 修复6：使用 safeStorage
+        const normalized = assets.map(a => ({
+            name: String(a.name || ''),
+            targetRatio: Number(isNaN(a.targetRatio) ? 0 : a.targetRatio),
+            buyFeeRate: Number(isNaN(a.buyFeeRate) ? 0 : a.buyFeeRate)
+        }));
+        safeStorage.set(STORAGE_KEY, JSON.stringify({ assetCount: normalized.length, assets: normalized }));
+    }
+
+    function loadStoredData() {
+        // ✅ 修复6：使用 safeStorage
+        try {
+            const raw = safeStorage.get(STORAGE_KEY);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            if (parsed.assetCount) {
+                document.getElementById('assetCount').value = parsed.assetCount;
+            }
+            createAssetInputs(parsed.assets);
+        } catch (e) {
+            console.error('加载本地存储失败：', e);
+        }
+    }
+
+    function clearStoredData() {
+        if (confirm('确定清空所有保存数据？')) {
+            // ✅ 修复6：使用 safeStorage
+            safeStorage.remove(STORAGE_KEY);
+            location.reload();
+        }
+    }
+
+    function calculateRebalance() {
+        const items = document.querySelectorAll('.asset-item');
+        if (!items || items.length === 0) return alert('请先生成资产输入项');
+
+        const assets = Array.from(items).map((item, idx) => {
+            const name = item.querySelector('.assetName').value.trim() || `资产${idx+1}`;
+            const current = parseFloat(item.querySelector('.currentValue').value) || 0;
+            const ratioPct = parseFloat(item.querySelector('.targetRatio').value);
+            // ✅ 修复4：feePct 若为 NaN 则默认 0，避免 toFixed 崩溃
+            const feePctRaw = parseFloat(item.querySelector('.buyFeeRate').value);
+            const feePct = isNaN(feePctRaw) ? 0 : feePctRaw;
+            const price = parseFloat(parseFloat(item.querySelector('.currentPrice').value).toFixed(4)) || 0.0001;
+            return { name, current, ratioPct, feePct, price };
+        });
+
+        const totalRatio = assets.reduce((s,a) => s + (isNaN(a.ratioPct)?0:a.ratioPct), 0);
+        if (Math.abs(totalRatio - 100) > 0.1)
+            return alert(`目标配置比例之和=${totalRatio.toFixed(2)}%，应为100%`);
+
+        const totalAsset = assets.reduce((s,a) => s + a.current, 0);
+        if (totalAsset < 0.01) return alert('总资产为0');
+
+        rebalanceResults = assets.map(a => {
+            const ratio = a.ratioPct / 100;
+            const target = totalAsset * ratio;
+            const diff = a.current - target;  // 正=超配需卖出，负=欠配需买入
+            const fee = a.feePct / 100;
+
+            let action = '无';
+            // ✅ 修复1：统一用正数表示金额，用 action 区分方向
+            let amount = 0;
+            let shares = '-';
+
+            if (diff > 0.01) {
+                // 卖出：卖出金额 = 超出部分（不含手续费，卖出手续费暂不单独计算）
+                action = '卖出';
+                amount = round2(diff);  // ✅ 正数（保留2位小数）
+                shares = (amount / a.price).toFixed(2);
+            } else if (diff < -0.01) {
+                // 买入：需要花费金额 = 欠配金额 × (1 + 买入费率)
+                action = '买入';
+                const netBuy = Math.abs(diff);
+                amount = round2(netBuy * (1 + fee));  // ✅ 正数，含手续费（保留2位小数）
+                // ✅ 修复2：计算买入份额 = 实际到账净值 / 当前价格
+                shares = (netBuy / a.price).toFixed(2);
+            }
+
+            return {
+                name: a.name,
+                current: round2(a.current),
+                target: round2(target),
+                feePct: a.feePct.toFixed(2),  // ✅ 修复4：feePct 已保证非 NaN
+                price: a.price.toFixed(4),
+                action,
+                amount,   // 统一正数
+                shares
+            };
+        });
+
+        // ✅ 修复3：转换计划传入净买入金额（不含手续费）用于资金匹配
+        convertResults = generateConvertPlan(rebalanceResults, assets);
+        renderRebalanceResult(totalAsset);
+        renderConvertPlan();
+    }
+
+    // ✅ 修复3：增加 assetsRaw 参数，用净金额做资金流向匹配
+    function generateConvertPlan(rebalanceData, assetsRaw) {
+        // 卖出金额（正数）
+        const sellers = rebalanceData.filter(r => r.action === '卖出')
+            .map(s => ({
+                name: s.name,
+                available: s.amount,
+                remaining: s.amount,
+                price: parseFloat(s.price)
+            }));
+
+        // ✅ 改进2：资金匹配按「含手续费的实际花费」对账，避免漏算需补的资金
+        const buyers = rebalanceData.filter(r => r.action === '买入')
+            .map(b => {
+                const raw = assetsRaw ? assetsRaw.find(a => a.name === b.name) : null;
+                const fee = raw ? raw.feePct / 100 : 0;
+                // 买入实际要花的现金 = 含手续费的总金额（b.amount 已是 netBuy*(1+fee)）
+                const totalCost = b.amount;
+                return { name: b.name, remaining: totalCost, totalCost, fee, price: parseFloat(b.price) };
+            });
+
+        const plan = [];
+        sellers.forEach(seller => {
+            while (seller.remaining > 0 && buyers.some(b => b.remaining > 0)) {
+                const buyer = buyers.find(b => b.remaining > 0);
+                const transfer = Math.min(seller.remaining, buyer.remaining);
+                plan.push({
+                    '卖出资产': seller.name,
+                    '卖出金额(元)': round2(transfer),
+                    '卖出份额(份)': (transfer / seller.price).toFixed(2),
+                    '买入资产': buyer.name,
+                    '买入金额(元)': round2(transfer),
+                    '转换状态': '内部资金匹配'
+                });
+                seller.remaining -= transfer;
+                buyer.remaining -= transfer;
+            }
+        });
+
+        buyers.forEach(buyer => {
+            if (buyer.remaining > 0.01) {
+                plan.push({
+                    '卖出资产': '外部资金',
+                    '卖出金额(元)': round2(buyer.remaining),
+                    '卖出份额(份)': '—',
+                    '买入资产': buyer.name,
+                    '买入金额(元)': round2(buyer.remaining),
+                    '转换状态': '需额外注入资金'
+                });
+            }
+        });
+
+        sellers.forEach(seller => {
+            if (seller.remaining > 0.01) {
+                plan.push({
+                    '卖出资产': seller.name,
+                    '卖出金额(元)': round2(seller.remaining),
+                    '卖出份额(份)': (seller.remaining / seller.price).toFixed(2),
+                    '买入资产': '无',
+                    '买入金额(元)': 0,
+                    '转换状态': '剩余卖出资金（可提现/备用）'
+                });
+            }
+        });
+
+        return plan.length ? plan : [{
+            '卖出资产':'无','卖出金额(元)':0,'卖出份额(份)':'—','买入资产':'无','买入金额(元)':0,'转换状态':'无需转换'
+        }];
+    }
+
+    function renderRebalanceResult(totalAsset) {
+        document.getElementById('totalAsset').innerHTML =
+            `总资产　<strong>${fmtMoney(totalAsset)} 元</strong>`;
+        const headers = ['资产名称','当前市值(元)','目标市值(元)','买入手续费率(%)','当前价格(元/份)','操作类型','操作金额(元)','份额(份)'];
+        let html = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+        rebalanceResults.forEach(r => {
+            // ✅ 修复1：操作金额统一正数，用颜色区分买入/卖出
+            const actionClass = r.action === '卖出' ? 'sell' : (r.action === '买入' ? 'buy' : '');
+            const amountDisplay = r.action === '无' ? '—' : fmtMoney(r.amount);
+            html += `<tr>
+                <td>${r.name}</td>
+                <td>${fmtMoney(r.current)}</td>
+                <td>${fmtMoney(r.target)}</td>
+                <td>${r.feePct}</td>
+                <td>${r.price}</td>
+                <td class="${actionClass}">${r.action}</td>
+                <td class="${actionClass}">${amountDisplay}</td>
+                <td>${r.shares}</td>
+            </tr>`;
+        });
+        document.getElementById('resultTable').innerHTML = html;
+        document.getElementById('resultArea').style.display = 'block';
+    }
+
+    function renderConvertPlan() {
+        const headers = ['卖出资产','卖出金额(元)','卖出份额(份)','买入资产','买入金额(元)','转换状态'];
+        let html = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+        convertResults.forEach(r => {
+            const statusColor = r['转换状态'] === '需额外注入资金' ? 'color:var(--red);' :
+                                r['转换状态'] === '内部资金匹配' ? 'color:var(--green);' : 'color:var(--ink-faint);';
+            html += `<tr>
+                <td>${r['卖出资产']}</td>
+                <td>${fmtMoney(r['卖出金额(元)'])}</td>
+                <td style="color:var(--red);font-weight:600;">${r['卖出份额(份)']}</td>
+                <td>${r['买入资产']}</td>
+                <td>${fmtMoney(r['买入金额(元)'])}</td>
+                <td style="${statusColor}font-weight:600;">${r['转换状态']}</td>
+            </tr>`;
+        });
+        document.getElementById('convertTable').innerHTML = html;
+        document.getElementById('convertArea').style.display = 'block';
+    }
+
+    function exportExcel(type) {
+        if (typeof XLSX === 'undefined') return alert('Excel 库未加载');
+        if (type === 'rebalance') {
+            const data = rebalanceResults.map(r => ({
+                '资产名称': r.name,
+                '当前市值(元)': r.current,
+                '目标市值(元)': r.target,
+                '买入手续费率(%)': r.feePct,
+                '当前价格(元/份)': r.price,
+                '操作类型': r.action,
+                '操作金额(元)': r.amount,  // ✅ 修复1：正数
+                '份额(份)': r.shares
+            }));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, '再平衡结果');
+            XLSX.writeFile(wb, `再平衡结果_${new Date().toISOString().slice(0,10)}.xlsx`);
+        } else {
+            const data = convertResults.map(r => ({
+                '卖出资产': r['卖出资产'],
+                '卖出金额(元)': r['卖出金额(元)'],
+                '卖出份额(份)': r['卖出份额(份)'],
+                '买入资产': r['买入资产'],
+                '买入金额(元)': r['买入金额(元)'],
+                '转换状态': r['转换状态']
+            }));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, '转换方案');
+            XLSX.writeFile(wb, `转换方案_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+    }
+    </script>
+</body>
+</html>
