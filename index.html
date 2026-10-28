@@ -218,15 +218,21 @@
     <script src="./core.js"></script>
     <script src="./app.js"></script>
 
-    <!-- 注册 Service Worker：关网也能打开，并且支持“安装到主屏幕”后无地址栏 -->
+    <!-- 注册 Service Worker：关网也能打开，并且支持“安装到主屏幕”后无地址栏。
+         只有网页版才注册 —— 打包成 APK 后资源就在安装包里，不需要缓存，
+         而且旧的 SW 缓存会让升级后的 APK 还显示上一版页面。 -->
     <script>
-    if ('serviceWorker' in navigator) {
+    (function () {
+        if (window.Capacitor && window.Capacitor.isNativePlatform
+            && window.Capacitor.isNativePlatform()) return;
+        if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
+        if (!('serviceWorker' in navigator)) return;
         window.addEventListener('load', function () {
             navigator.serviceWorker.register('./sw.js').catch(function (err) {
                 console.warn('Service Worker 注册失败：', err);
             });
         });
-    }
+    })();
     </script>
 </body>
 </html>

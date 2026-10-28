@@ -4,6 +4,18 @@
   "private": true,
   "description": "资产再平衡计算器",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "e2e:desktop": "node e2e/desktop.mjs",
+    "e2e:mobile": "node e2e/mobile.mjs",
+    "build:www": "node scripts/stage-www.mjs",
+    "android:sync": "npm run build:www && cap sync android",
+    "android:apk": "npm run android:sync && node scripts/build-apk.mjs"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
   }
 }

@@ -51,4 +51,27 @@ node e2e/mobile.mjs         # 6 项真浏览器冒烟测试（390 宽手机）
 
 ## 怎么在手机上用
 
-打开 Pages 地址 → 浏览器菜单 → 添加到主屏幕。
+两种方式，选一个：
+
+**方式一：网页版（免安装）** 打开 Pages 地址 → 浏览器菜单 → 添加到主屏幕。
+缺点是荣耀浏览器做出来的快捷方式仍带地址栏（它不实现 PWA 的 standalone 显示）。
+
+**方式二：APK（推荐，没有地址栏、完全离线）**
+
+```bash
+npm run android:apk     # 出包 → dist/rebalance-debug.apk
+```
+
+然后把 `dist/rebalance-debug.apk` 传到手机点击安装；连了数据线也可以：
+
+```bash
+~/android-dev/sdk/platform-tools/adb install -r dist/rebalance-debug.apk
+```
+
+打包用的是 Capacitor 6（原生壳），网页代码原样塞进安装包，所以改完代码重新跑一次
+`npm run android:apk` 再装一遍即可。环境要求：JDK 17 + Android SDK（路径写死在
+`scripts/build-apk.mjs` 里，换机器用环境变量 `JAVA_HOME` / `ANDROID_HOME` 覆盖）。
+
+`www/` 是给 Capacitor 的暂存目录，由 `scripts/stage-www.mjs` 按白名单生成，
+**故意不含 `sw.js`**：安装包里的资源本来就是本地的，留着 Service Worker 反而会让
+升级后还显示上一版页面。

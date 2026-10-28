@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 配色跟着网页版走：深墨蓝主色 + 金色强调。styles.xml 引用了这三个名字，
+     缺了它们 Gradle 会报 “resource color/colorPrimary not found”。 -->
+<resources>
+    <color name="colorPrimary">#1b2430</color>
+    <color name="colorPrimaryDark">#101821</color>
+    <color name="colorAccent">#b8893f</color>
+</resources>

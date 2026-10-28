@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+
+    <!-- 必须是 Light 主题，不能用模板原来的 DayNight：
+         手机开深色模式时 DayNight 会让系统给 WebView 做“强制深色”反色，
+         页面明明自己画了米白底，却被系统染成灰黑，配色全乱。
+         再加 forceDarkAllowed=false 双保险（Android 10 及以上生效）。 -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+
+
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>
