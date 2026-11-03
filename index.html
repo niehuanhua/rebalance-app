@@ -8,8 +8,16 @@
     <link rel="apple-touch-icon" href="./icons/icon-180.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="再平衡">
-    <title>资产再平衡 + 资产转换规划</title>
+    <meta name="apple-mobile-web-app-title" content="归衡配比">
+    <title>归衡配比测算器</title>
+    <script>
+    // 只在 APK 里给 <html> 加这个类，用来在隐私同意前先藏住主界面（见下方 CSS）。
+    // 网页版 / PWA / e2e 拿不到 window.Capacitor，所以完全不受影响。
+    if (window.Capacitor && window.Capacitor.isNativePlatform
+        && window.Capacitor.isNativePlatform()) {
+        document.documentElement.classList.add('capacitor-native');
+    }
+    </script>
     <style>
         :root {
             --ink: #1b2430;
@@ -106,6 +114,43 @@
         .convert-section { }
         .controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 
+        /* 首启隐私同意弹层（只在 APK 里出现，判定见 app.js 的 isNativeApp） */
+        .consent-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+            background: rgba(27,36,48,0.55);
+            -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+        }
+        /* display:flex 会盖掉 hidden 属性自带的隐藏效果，必须补这一条 */
+        .consent-overlay[hidden] { display: none; }
+        .consent-card {
+            width: 100%; max-width: 460px; max-height: 86vh; overflow-y: auto;
+            background: var(--card); border-radius: 14px; padding: 26px 24px 22px;
+            box-shadow: 0 18px 50px rgba(27,36,48,0.28); font-size: 14px;
+        }
+        .consent-card h2 { font-size: 17px; color: var(--teal-deep); margin: 0 0 14px; }
+        .consent-card p { margin: 0 0 10px; color: var(--ink-soft); line-height: 1.7; }
+        .consent-card ul { margin: 0 0 12px; padding-left: 20px; color: var(--ink-soft); line-height: 1.8; }
+        .consent-card a { color: var(--teal); }
+        .consent-check {
+            display: flex; align-items: flex-start; gap: 9px;
+            margin: 16px 0 18px; font-size: 14px; color: var(--ink); margin-right: 0;
+        }
+        .consent-check input { width: 18px; height: 18px; margin: 3px 0 0; flex-shrink: 0; }
+        .consent-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .consent-actions[hidden] { display: none; }
+        .consent-actions button { flex: 1; min-width: 130px; min-height: 44px; }
+        .consent-actions button:disabled { background: var(--ink-faint); cursor: not-allowed; }
+        .consent-actions .clear-btn { flex: 0 0 auto; min-width: 96px; margin-left: 0; }
+        .consent-declined {
+            margin-top: 14px; padding: 12px 14px; background: var(--red-tint);
+            color: var(--red); border-radius: 8px; font-size: 13.5px;
+        }
+        .consent-declined[hidden] { display: none; }
+        /* 原生环境里，在拿到同意之前先把主界面藏住，避免弹层出现前闪一下默认数据。
+           网页版永远不加这个类。 */
+        html.capacitor-native body > *:not(#consentGate):not(script) { visibility: hidden; }
+
         td.sell { color: var(--red); font-weight: 600; }
         td.buy  { color: var(--green); font-weight: 600; }
 
@@ -175,7 +220,31 @@
 </head>
 <body>
 
-    <h1>资产再平衡计算器</h1>
+    <!-- 首启隐私同意。默认 hidden，只有 app.js 在原生环境且尚未同意时才打开。 -->
+    <div class="consent-overlay" id="consentGate" hidden>
+        <div class="consent-card" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
+            <h2 id="consentTitle">隐私政策</h2>
+            <p>归衡配比测算器是一个完全离线的本地计算工具：</p>
+            <ul>
+                <li>不联网，没有申请网络权限</li>
+                <li>不收集任何个人信息，没有账号</li>
+                <li>你输入的数字只保存在本机，开发者看不到</li>
+                <li>没有第三方 SDK、广告和统计埋点</li>
+            </ul>
+            <p><a href="./privacy.html">阅读《隐私政策》全文</a></p>
+            <label class="consent-check">
+                <input type="checkbox" id="consentCheckbox">
+                <span>我已阅读并同意《隐私政策》</span>
+            </label>
+            <div class="consent-actions" id="consentButtons">
+                <button id="consentAgree" disabled>同意并继续</button>
+                <button id="consentDecline" class="clear-btn">不同意</button>
+            </div>
+            <div class="consent-declined" id="consentDeclined" hidden>未同意隐私政策，本应用无法使用。</div>
+        </div>
+    </div>
+
+    <h1>归衡配比测算器</h1>
     <div class="subtitle">含资产转换规划 · 自动计算买卖份额与资金流向</div>
 
     <div class="section">

@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="my_images" path="." />
+    <!-- Capacitor 相机拍照的临时文件落在 getExternalFilesDir(DIRECTORY_PICTURES)，
+         收窄到这一个子目录。原来的 <external-path path="."> 等于把整个外部存储都暴露给
+         FileProvider，对「单机计算器」来说没必要。
+         本应用目前没有 <input type="file">，capacitor.plugins.json 也是 []，
+         收窄不会影响任何已有功能。 -->
+    <external-files-path name="my_images" path="Pictures/" />
     <cache-path name="my_cache_images" path="." />
 </paths>

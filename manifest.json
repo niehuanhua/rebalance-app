@@ -1,6 +1,6 @@
 {
-  "name": "资产再平衡计算器",
-  "short_name": "再平衡",
+  "name": "归衡配比测算器",
+  "short_name": "归衡配比",
   "description": "算出该卖多少、该买多少，并配对资金来源。",
   "lang": "zh-CN",
   "start_url": "./",

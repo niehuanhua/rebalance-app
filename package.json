@@ -2,20 +2,25 @@
   "name": "rebalance-app",
   "version": "1.0.0",
   "private": true,
-  "description": "资产再平衡计算器",
+  "description": "归衡配比测算器",
   "scripts": {
     "test": "node --test",
     "e2e:desktop": "node e2e/desktop.mjs",
     "e2e:mobile": "node e2e/mobile.mjs",
+    "e2e:consent": "node e2e/consent.mjs",
+    "e2e:export": "node e2e/export.mjs",
     "build:www": "node scripts/stage-www.mjs",
     "android:sync": "npm run build:www && cap sync android",
-    "android:apk": "npm run android:sync && node scripts/build-apk.mjs"
+    "android:apk": "npm run android:sync && node scripts/build-apk.mjs",
+    "android:apk:release": "npm run android:sync && node scripts/build-apk.mjs --release"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
-    "@capacitor/core": "^6.2.0"
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/share": "^6.0.4"
   }
 }

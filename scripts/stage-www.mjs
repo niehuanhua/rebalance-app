@@ -16,6 +16,7 @@ const out = path.join(root, 'www');
 // 缺一个就报错停下，不要静默打出一个缺文件的包
 const ENTRIES = [
   'index.html',
+  'privacy.html',
   'app.js',
   'core.js',
   'manifest.json',

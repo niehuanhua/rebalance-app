@@ -7,6 +7,11 @@
 |---|---|
 | `desktop.mjs` | 桌面宽度下的 9 项：默认值、五五开不多 1 分钱、卖出费率、XSS 转义、报错带行号、数量夹 50、刷新后数据还在 |
 | `mobile.mjs` | 390×844 手机宽度下的 6 项：没有横向滚动、输入框 ≥16px、按钮 ≥44px、两张结果表变成卡片、切回 1280 恢复表格 |
+| `consent.mjs` | 5 项：首启隐私同意弹窗（注入假 Capacitor 模拟 APK 环境） |
+| `export.mjs` | 6 项：导出 Excel 的两条路——APK 里走 Filesystem+分享，网页版走浏览器下载 |
+
+两个新脚本都靠 CDP 的 `Page.addScriptToEvaluateOnNewDocument` 在页面脚本之前注入假桥，
+业务代码里没有留任何测试开关。
 
 ## 怎么跑
 

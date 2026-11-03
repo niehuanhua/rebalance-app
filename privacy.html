@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1b2430">
+    <title>隐私政策 · 归衡配比测算器</title>
+    <style>
+        :root {
+            --ink: #1b2430;
+            --ink-soft: #5b6675;
+            --ink-faint: #9aa3b0;
+            --paper: #fbfaf7;
+            --card: #ffffff;
+            --line: #e7e4dc;
+            --teal: #0f5c50;
+            --teal-deep: #0a443b;
+            --teal-tint: #eaf3f0;
+            --gold: #b8893f;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+            max-width: 760px; margin: 0 auto; padding: 34px 20px 60px;
+            background: var(--paper); color: var(--ink); line-height: 1.75; font-size: 15px;
+        }
+        h1 { font-size: 22px; font-weight: 600; color: var(--teal-deep); margin: 0 0 6px; }
+        h1::after {
+            content: ""; display: block; width: 48px; height: 3px; background: var(--gold);
+            margin: 10px 0 0; border-radius: 2px;
+        }
+        .meta { color: var(--ink-faint); font-size: 12.5px; margin: 10px 0 26px; }
+        h2 {
+            font-size: 15px; font-weight: 600; color: var(--teal-deep);
+            margin: 26px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line);
+        }
+        p { margin: 0 0 10px; color: var(--ink-soft); }
+        ul { margin: 0 0 10px; padding-left: 22px; color: var(--ink-soft); }
+        li { margin: 4px 0; }
+        strong { color: var(--ink); font-weight: 600; }
+        .highlight {
+            margin: 18px 0; padding: 14px 16px; background: var(--teal-tint);
+            border-left: 3px solid var(--teal); border-radius: 8px; color: var(--teal-deep);
+        }
+        .highlight p { color: var(--teal-deep); margin: 0; }
+        a { color: var(--teal); }
+        .back {
+            display: inline-block; margin-top: 34px; padding: 11px 26px; min-height: 44px;
+            background: var(--teal); color: #fff; text-decoration: none; border-radius: 9px;
+            font-size: 14px; line-height: 22px;
+        }
+        .back:hover { background: var(--teal-deep); }
+    </style>
+</head>
+<body>
+
+    <h1>隐私政策</h1>
+    <div class="meta">适用于「归衡配比测算器」Android 应用（包名 com.niehuanhuan.rebalance）<br>版本 v1 · 生效日期 2026 年 11 月 3 日</div>
+
+    <div class="highlight">
+        <p><strong>一句话总结：</strong>本应用是一个完全离线的本地计算工具。它不联网、不申请任何权限、不收集任何个人信息；你输入的数字只保存在你自己的手机里。</p>
+    </div>
+
+    <h2>一、这个应用是做什么的</h2>
+    <p>归衡配比测算器是一个资产配置的<strong>本地计算器</strong>。你手动输入自己各类资产的当前市值、目标配置比例、手续费率和价格，应用在本机算出「该卖多少、该买多少」以及「卖出资金流向哪个买入资产」。</p>
+    <p>它<strong>不是</strong>投资顾问，不提供任何投资建议，也不连接任何券商、银行、基金账户或第三方行情数据。</p>
+
+    <h2>二、我们不收集任何个人信息</h2>
+    <ul>
+        <li>不收集姓名、手机号、邮箱、身份证、设备标识符（IMEI / Android ID 等）</li>
+        <li>不收集位置、通讯录、相册、短信、通话记录</li>
+        <li>不收集你在应用里输入的任何资产名称、金额、比例、价格</li>
+        <li>没有账号系统，不需要注册，不需要登录</li>
+    </ul>
+
+    <h2>三、你的数据存在哪里</h2>
+    <p>你输入的全部内容，只保存在本机应用私有目录的 <strong>localStorage</strong> 中，用于下次打开时自动恢复。这些数据不会上传到任何服务器，开发者也无法看到。</p>
+    <p>你可以随时使用首页的「<strong>清空保存的历史数据</strong>」按钮删除它们；<strong>卸载应用即等同于删除全部数据</strong>，且无法恢复。</p>
+    <p>使用「导出 Excel」功能时，应用会在你的手机上生成一个 .xlsx 文件。这个文件保存在哪里、要不要分享给别人，完全由你决定。</p>
+
+    <h2>四、本应用不联网</h2>
+    <p>本应用<strong>没有申请网络权限（android.permission.INTERNET）</strong>。安装包的页面和程序全部来自安装包自身，因此从系统层面就无法把数据发往外部。你可以在手机的「应用信息 → 权限」里核实：本应用的权限列表是空的。</p>
+
+    <h2>五、没有第三方 SDK、广告和统计埋点</h2>
+    <ul>
+        <li>没有广告 SDK，没有推送 SDK，没有崩溃上报或数据统计 SDK</li>
+        <li>没有使用任何会在后台联网的第三方组件</li>
+        <li>界面用到的 Excel 导出库（SheetJS）随安装包一起分发，在本机运行，不联网</li>
+    </ul>
+
+    <h2>六、关于儿童</h2>
+    <p>本应用不面向儿童，也不会收集任何年龄信息或儿童个人信息。</p>
+
+    <h2>七、政策的更新</h2>
+    <p>如果本应用将来增加了需要处理个人信息的功能，我们会先更新本政策并重新征求你的同意，然后才启用该功能。政策版本号会同时更新（当前为 v1）。</p>
+
+    <h2>八、联系方式</h2>
+    <p>对本政策有任何疑问，可以通过应用商店详情页公示的开发者联系渠道与我们联系。</p>
+
+    <a class="back" href="./index.html">返回应用</a>
+
+</body>
+</html>

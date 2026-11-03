@@ -3,3 +3,10 @@ node_modules/
 *.log
 www/
 dist/
+
+# 签名密钥：只有 android/keystore.properties 在这台机器上，密钥本体在
+# ~/android-dev/keys/ 仓库外。这两条是双保险——万一有人把 .jks 拷进项目目录，
+# 也不会被 git add -A 顺手提交上去。
+*.jks
+*.keystore
+keystore.properties

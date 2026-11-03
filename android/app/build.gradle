@@ -1,5 +1,22 @@
 apply plugin: 'com.android.application'
 
+/* 正式签名密钥的密码从 android/keystore.properties 读（该文件已 gitignore，
+ * 密钥本体在仓库外的 ~/android-dev/keys/）。
+ * 文件不存在时什么都不配——这样没密钥的机器跑 assembleDebug 照常能出包。
+ * 注意：不要写进 capacitor.build.gradle，那个文件每次 cap sync 都会被覆盖。
+ */
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+def hasReleaseKey = false
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+    hasReleaseKey = true
+    def keyPath = keystoreProps['storeFile']
+    if (!keyPath || !file(keyPath).exists()) {
+        throw new GradleException("keystore.properties 里写的密钥文件不存在：${keyPath}")
+    }
+}
+
 android {
     namespace "com.niehuanhuan.rebalance"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +24,8 @@ android {
         applicationId "com.niehuanhuan.rebalance"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +33,21 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

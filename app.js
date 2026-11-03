@@ -33,14 +33,63 @@ const safeStorage = {
     },
 };
 
+/* ---- 首启隐私同意 ----
+ * 只在 APK 里弹（网页版 / PWA / e2e 拿不到 Capacitor，直接走 startApp）。
+ * 必须在 loadStoredData() / createAssetInputs() 之前判定：
+ * createAssetInputs() 一进来就会把默认数据写进 localStorage（第 91 行），
+ * 门放在它后面等于「只是打开了一次」就已经落盘了数据。
+ */
+const CONSENT_KEY = 'privacyConsent_v1';
+const CONSENT_VALUE = 'granted:v1';   // 隐私政策改版时改成 v2，老用户会被重新问一次
+
+function isNativeApp() {
+    return !!(window.Capacitor && window.Capacitor.isNativePlatform
+        && window.Capacitor.isNativePlatform());
+}
+
 window.onload = function () {
+    if (isNativeApp() && safeStorage.get(CONSENT_KEY) !== CONSENT_VALUE) {
+        showConsentGate();   // 只显示弹层，不读也不写任何业务数据
+        return;
+    }
+    startApp();
+};
+
+function startApp() {
+    document.documentElement.classList.remove('capacitor-native');
     if (typeof XLSX === 'undefined') {
         alert('Excel 导出库加载失败');
     }
     loadStoredData();
     const container = document.getElementById('assetInputs');
     if (!container || container.innerHTML.trim() === '') createAssetInputs();
-};
+}
+
+function showConsentGate() {
+    const gate = document.getElementById('consentGate');
+    const check = document.getElementById('consentCheckbox');
+    const agree = document.getElementById('consentAgree');
+    const decline = document.getElementById('consentDecline');
+    const declined = document.getElementById('consentDeclined');
+    const buttons = document.getElementById('consentButtons');
+    if (!gate || !check || !agree || !decline) { startApp(); return; }   // 兜底：DOM 没跟上别把人锁死
+
+    gate.hidden = false;
+    check.addEventListener('change', () => { agree.disabled = !check.checked; });
+    agree.addEventListener('click', () => {
+        if (!check.checked) return;
+        safeStorage.set(CONSENT_KEY, CONSENT_VALUE);
+        gate.hidden = true;
+        startApp();
+    });
+    decline.addEventListener('click', () => {
+        // Capacitor 没有内置退出 API，为这个装插件不值得：
+        // 挡住主界面并说明原因，效果等同于「不能用」。
+        buttons.hidden = true;
+        check.disabled = true;
+        if (declined) declined.hidden = false;
+    });
+}
 
 function createAssetInputs(savedAssets) {
     const countInput = document.getElementById('assetCount');
@@ -251,6 +300,35 @@ function renderConvertPlan() {
     document.getElementById('convertArea').style.display = 'block';
 }
 
+/* 把工作簿交到用户手上。两种环境走完全不同的路：
+ *
+ * 网页版：XLSX.writeFile 走 Blob + 合成一个 <a download> 点击，浏览器正常下载。
+ * APK 里：这条路是死的（2026-11-03 真机实测：点了没有任何反应）。
+ *   原因是 Capacitor 的 WebViewClient 没有实现下载监听，Blob 下载没人接。
+ *   所以改成：写进应用缓存目录 → 调系统分享面板，用户自己选「保存到文件」
+ *   或者直接发到微信。文件落在 getCacheDir()（Directory.Cache = 'CACHE'），
+ *   res/xml/file_paths.xml 里的 <cache-path path="." /> 已经放行，分享不需要任何权限。
+ */
+async function saveWorkbook(wb, filename) {
+    if (!isNativeApp()) {
+        XLSX.writeFile(wb, filename);
+        return;
+    }
+    const Plugins = window.Capacitor.Plugins || {};
+    if (!Plugins.Filesystem || !Plugins.Share) {
+        return alert('导出组件未加载，无法导出 Excel');
+    }
+    try {
+        const data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        const { uri } = await Plugins.Filesystem.writeFile({ path: filename, data, directory: 'CACHE' });
+        await Plugins.Share.share({ title: filename, url: uri, dialogTitle: '保存或发送 Excel' });
+    } catch (e) {
+        // 用户在分享面板点「取消」也会走到这里，那不是错误，别再弹一次吓人
+        const msg = String((e && e.message) || e || '');
+        if (!/cancel/i.test(msg)) alert('导出失败：' + msg);
+    }
+}
+
 function exportExcel(type) {
     if (typeof XLSX === 'undefined') return alert('Excel 库未加载');
     if (type === 'rebalance') {
@@ -270,7 +348,7 @@ function exportExcel(type) {
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(data);
         XLSX.utils.book_append_sheet(wb, ws, '再平衡结果');
-        XLSX.writeFile(wb, `再平衡结果_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        saveWorkbook(wb, `再平衡结果_${new Date().toISOString().slice(0, 10)}.xlsx`);
     } else {
         const data = convertResults.map(r => ({
             '卖出资产': r['卖出资产'],
@@ -283,6 +361,6 @@ function exportExcel(type) {
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(data);
         XLSX.utils.book_append_sheet(wb, ws, '转换方案');
-        XLSX.writeFile(wb, `转换方案_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        saveWorkbook(wb, `转换方案_${new Date().toISOString().slice(0, 10)}.xlsx`);
     }
 }

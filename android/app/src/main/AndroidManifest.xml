@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -35,7 +35,7 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
-
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 不申请任何权限：本应用完全离线，页面从安装包内的本地资源加载。
+         INTERNET 权限是 Capacitor 模板默认加的，删掉它之后「不联网」才是可核验的事实，
+         而不是一句宣传语。（删掉的代价：真机飞行模式下必须验证页面仍能起来。） -->
 </manifest>
