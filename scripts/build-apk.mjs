@@ -95,7 +95,7 @@ if (!existsSync(apk)) throw new Error(`Gradle 说成功了，但没找到 ${apk}
 const dist = path.join(ROOT, 'dist');
 mkdirSync(dist, { recursive: true });
 const versionName = readVersionName();
-const out = path.join(dist, IS_RELEASE ? `归衡配比测算器-v${versionName}.apk` : 'rebalance-debug.apk');
+const out = path.join(dist, IS_RELEASE ? `资产再平衡计算器-v${versionName}.apk` : 'rebalance-debug.apk');
 copyFileSync(apk, out);
 
 const mb = (statSync(out).size / 1024 / 1024).toFixed(1);

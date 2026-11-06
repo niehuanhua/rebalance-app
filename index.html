@@ -8,8 +8,8 @@
     <link rel="apple-touch-icon" href="./icons/icon-180.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="归衡配比">
-    <title>归衡配比测算器</title>
+    <meta name="apple-mobile-web-app-title" content="再平衡">
+    <title>资产再平衡计算器</title>
     <script>
     // 只在 APK 里给 <html> 加这个类，用来在隐私同意前先藏住主界面（见下方 CSS）。
     // 网页版 / PWA / e2e 拿不到 window.Capacitor，所以完全不受影响。
@@ -224,7 +224,7 @@
     <div class="consent-overlay" id="consentGate" hidden>
         <div class="consent-card" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
             <h2 id="consentTitle">隐私政策</h2>
-            <p>归衡配比测算器是一个完全离线的本地计算工具：</p>
+            <p>资产再平衡计算器是一个完全离线的本地计算工具：</p>
             <ul>
                 <li>不联网，没有申请网络权限</li>
                 <li>不收集任何个人信息，没有账号</li>
@@ -244,7 +244,7 @@
         </div>
     </div>
 
-    <h1>归衡配比测算器</h1>
+    <h1>资产再平衡计算器</h1>
     <div class="subtitle">含资产转换规划 · 自动计算买卖份额与资金流向</div>
 
     <div class="section">
@@ -261,6 +261,17 @@
 
     <div class="primary-action">
         <button onclick="calculateRebalance()">开始计算再平衡并生成转换方案</button>
+    </div>
+
+    <div class="section">
+        <h3>备份与恢复</h3>
+        <div class="controls">
+            <button onclick="exportBackup()">备份数据到文件</button>
+            <button onclick="pickBackupFile()">从备份文件恢复</button>
+            <input type="file" id="backupFileInput" accept=".json,application/json" hidden
+                   onchange="importBackupFromInput(this)">
+        </div>
+        <div class="tip">数据只存在这台设备上，换手机或卸载重装会全部丢失。换手机之前先点「备份数据到文件」，把得到的 .json 文件存到新手机能拿到的地方（微信传给自己、存进文件管理都行），装好软件后再点「从备份文件恢复」。</div>
     </div>
 
     <div class="section" id="resultArea" style="display:none;">
@@ -285,6 +296,7 @@
     <!-- XLSX 库 -->
     <script src="./vendor/xlsx.full.min.js"></script>
     <script src="./core.js"></script>
+    <script src="./backup.js"></script>
     <script src="./app.js"></script>
 
     <!-- 注册 Service Worker：关网也能打开，并且支持“安装到主屏幕”后无地址栏。

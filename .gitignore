@@ -10,3 +10,12 @@ dist/
 *.jks
 *.keystore
 keystore.properties
+
+# 软著申请材料：2026-11-06 决定不申请（申请确认签章页要求声明「未使用 AI 生成」，
+# 与事实不符）。材料连同生成脚本只留在本机当存档，不进仓库——
+# 它们跟软件本身无关，放进来只会让公开仓库多一堆死代码。
+manual-shots/
+scripts/manual/
+scripts/make-copyright-pdf.mjs
+scripts/make-manual-pdf.mjs
+scripts/capture-manual-shots.mjs

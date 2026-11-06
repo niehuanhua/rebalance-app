@@ -4,8 +4,9 @@
  * 不许自己再写一遍公式——两份实现迟早会跑偏。
  */
 const STORAGE_KEY = 'assetRebalanceData_v1';
-const MIN_ASSETS = 1;
-const MAX_ASSETS = 50;
+// 上下限只写一份，放在 backup.js 里：备份解析也要按同一个上限把关
+const MIN_ASSETS = Backup.MIN_ASSETS;
+const MAX_ASSETS = Backup.MAX_ASSETS;
 
 let rebalanceResults = [];
 let convertResults = [];
@@ -314,19 +315,110 @@ async function saveWorkbook(wb, filename) {
         XLSX.writeFile(wb, filename);
         return;
     }
+    const data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    await handOffNative(data, filename, '保存或发送 Excel', '无法导出 Excel');
+}
+
+/* APK 里把一段 base64 写进缓存目录，再交到系统分享面板。Excel 和备份文件共用。 */
+async function handOffNative(base64, filename, dialogTitle, failMessage) {
     const Plugins = window.Capacitor.Plugins || {};
     if (!Plugins.Filesystem || !Plugins.Share) {
-        return alert('导出组件未加载，无法导出 Excel');
+        return alert(`导出组件未加载，${failMessage}`);
     }
     try {
-        const data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-        const { uri } = await Plugins.Filesystem.writeFile({ path: filename, data, directory: 'CACHE' });
-        await Plugins.Share.share({ title: filename, url: uri, dialogTitle: '保存或发送 Excel' });
+        const { uri } = await Plugins.Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE' });
+        await Plugins.Share.share({ title: filename, url: uri, dialogTitle });
     } catch (e) {
         // 用户在分享面板点「取消」也会走到这里，那不是错误，别再弹一次吓人
         const msg = String((e && e.message) || e || '');
-        if (!/cancel/i.test(msg)) alert('导出失败：' + msg);
+        if (!/cancel/i.test(msg)) alert(`${failMessage}：` + msg);
     }
+}
+
+/* ---- 备份与恢复 ----
+ * 数据只在本机 localStorage，换手机就丢。导 Excel 只能带走计算结果，
+ * 带不回录入的数据，所以单独做一个 .json 备份（格式见 backup.js）。
+ */
+function todayStamp() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+// 中文要按 UTF-8 转成 base64，Capacitor Filesystem 写文件只认 base64
+function toBase64Utf8(text) {
+    const bytes = new TextEncoder().encode(text);
+    let bin = '';
+    const CHUNK = 0x8000;   // 一次太多参数会爆栈
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+}
+
+function downloadFile(text, filename, mime) {
+    const url = URL.createObjectURL(new Blob([text], { type: mime }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportBackup() {
+    if (typeof Backup === 'undefined') return alert('备份组件未加载，无法备份。');
+    const assets = collectAssetsFromDom();
+    if (assets.length === 0) return alert('还没有可备份的数据。');
+    const text = JSON.stringify(Backup.build({ assets }), null, 2);
+    const filename = `再平衡备份_${todayStamp()}.json`;
+    if (isNativeApp()) {
+        handOffNative(toBase64Utf8(text), filename, '保存或发送备份文件', '无法备份');
+    } else {
+        downloadFile(text, filename, 'application/json');
+    }
+}
+
+function pickBackupFile() {
+    const input = document.getElementById('backupFileInput');
+    if (input) input.click();
+}
+
+function readFileText(file) {
+    return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result || ''));
+        fr.onerror = () => reject(fr.error || new Error('读取失败'));
+        fr.readAsText(file, 'utf-8');
+    });
+}
+
+async function importBackupFromInput(input) {
+    if (typeof Backup === 'undefined') return alert('备份组件未加载，无法恢复。');
+    const file = input && input.files && input.files[0];
+    if (!file) return;
+
+    let text;
+    try {
+        text = await readFileText(file);
+    } catch (e) {
+        input.value = '';
+        return alert('恢复失败：文件读不出来。');
+    }
+    input.value = '';   // 清掉，才能再次选同一个文件
+
+    const parsed = Backup.parse(text);
+    if (!parsed.ok) return alert('恢复失败：' + parsed.error);
+    if (!confirm(`确定用这份备份覆盖当前数据吗？\n备份里有 ${parsed.assetCount} 个资产。`)) return;
+
+    safeStorage.set(STORAGE_KEY, JSON.stringify({ assetCount: parsed.assetCount, assets: parsed.assets }));
+    document.getElementById('assetCount').value = parsed.assetCount;
+    createAssetInputs(parsed.assets);
+
+    // 界面上旧的计算结果是上一份数据的，留着会误导
+    document.getElementById('resultArea').style.display = 'none';
+    document.getElementById('convertArea').style.display = 'none';
+
+    alert(`已恢复 ${parsed.assetCount} 个资产。核对无误后点「开始计算」。`);
 }
 
 function exportExcel(type) {

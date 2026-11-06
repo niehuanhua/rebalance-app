@@ -50,9 +50,9 @@ const splashSvg = (w, h) => {
   const artW = m * 0.26;
   const k = artW / 336;
   const artH = 248 * k;
-  // 0.040：名字改成 7 个字的「归衡配比测算器」后，0.052 会让标题比上面的箭头宽出一截；
-  // 这样缩到和 0.26m 的箭头差不多宽，视觉居中不偏。
-  const title = m * 0.040;
+  // 字号按「总宽度 ≈ 0.26m 的箭头」反推：7 字的旧名用 0.040，
+  // 现在名字 8 个字（资产再平衡计算器），乘 7/8 → 0.035，宽度保持不变。
+  const title = m * 0.035;
   const gap = m * 0.055;
   const top = h / 2 - (artH + gap + title) / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
@@ -60,7 +60,7 @@ const splashSvg = (w, h) => {
   ${arrows(k, w / 2, top + artH / 2)}
   <text x="${w / 2}" y="${top + artH + gap + title * 0.78}" text-anchor="middle"
         font-family="PingFang SC, Heiti SC, sans-serif" font-size="${title}" fill="${PAPER}"
-        letter-spacing="${title * 0.06}">归衡配比测算器</text>
+        letter-spacing="${title * 0.06}">资产再平衡计算器</text>
 </svg>`;
 };
 

@@ -18,6 +18,7 @@ const ENTRIES = [
   'index.html',
   'privacy.html',
   'app.js',
+  'backup.js',
   'core.js',
   'manifest.json',
   'icons',

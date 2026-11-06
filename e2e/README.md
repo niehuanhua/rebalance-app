@@ -1,7 +1,7 @@
 # 浏览器端冒烟测试
 
-`test/` 里那 35 条是 `node --test` 跑的纯逻辑测试，不碰页面。
-这里两个是**真浏览器**测试，用 Chrome DevTools Protocol 开真页面、点真按钮、读真表格。
+`test/` 里那些（含 16 条备份格式测试）是 `node --test` 跑的纯逻辑测试，不碰页面。
+这里是**真浏览器**测试，用 Chrome DevTools Protocol 开真页面、点真按钮、读真表格。
 
 | 文件 | 测什么 |
 |---|---|
@@ -9,9 +9,11 @@
 | `mobile.mjs` | 390×844 手机宽度下的 6 项：没有横向滚动、输入框 ≥16px、按钮 ≥44px、两张结果表变成卡片、切回 1280 恢复表格 |
 | `consent.mjs` | 5 项：首启隐私同意弹窗（注入假 Capacitor 模拟 APK 环境） |
 | `export.mjs` | 6 项：导出 Excel 的两条路——APK 里走 Filesystem+分享，网页版走浏览器下载 |
+| `backup.mjs` | 10 项：备份/恢复。网页版走下载，APK 里走 Filesystem+分享；备份→恢复后输入框逐字一致；选错文件、点取消都不改数据 |
 
-两个新脚本都靠 CDP 的 `Page.addScriptToEvaluateOnNewDocument` 在页面脚本之前注入假桥，
-业务代码里没有留任何测试开关。
+这几个脚本都靠 CDP 的 `Page.addScriptToEvaluateOnNewDocument` 在页面脚本之前注入假桥，
+业务代码里没有留任何测试开关。`backup.mjs` 用一个标签页里翻 `sessionStorage.__e2eNative`
+来回切「网页版 / APK」两种环境。
 
 ## 怎么跑
 
@@ -28,6 +30,9 @@ python3 -m http.server 8123
 # 3. 跑测试
 node e2e/desktop.mjs
 node e2e/mobile.mjs
+node e2e/consent.mjs
+node e2e/export.mjs
+node e2e/backup.mjs
 ```
 
 端口不是默认值就用环境变量：`CDP_BASE=http://127.0.0.1:9333 PAGE_URL=http://127.0.0.1:9000/index.html node e2e/mobile.mjs`
@@ -37,5 +42,5 @@ node e2e/mobile.mjs
 `sw.js` 对静态资源是**缓存优先**，所以改完 `app.js` 立刻跑测试，
 浏览器很可能还在用缓存里的旧文件，测试结果假的。
 
-两个脚本都在开头先注销 Service Worker、删掉全部 cache、清 localStorage，然后再测。
+每个脚本都在开头先注销 Service Worker、删掉全部 cache、清 localStorage，然后再测。
 手工验证时也一样：改完代码要么改 `sw.js` 的 `VERSION`，要么先清缓存。

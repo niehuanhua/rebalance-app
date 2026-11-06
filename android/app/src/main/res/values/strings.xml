@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">归衡配比测算器</string>
-    <string name="title_activity_main">归衡配比测算器</string>
+    <string name="app_name">资产再平衡计算器</string>
+    <string name="title_activity_main">资产再平衡计算器</string>
     <string name="package_name">com.niehuanhuan.rebalance</string>
     <string name="custom_url_scheme">com.niehuanhuan.rebalance</string>
 </resources>

@@ -1,28 +1,36 @@
-# 归衡配比测算器
+# 资产再平衡计算器
 
 用来算「手上的资产该卖多少、该买多少」的一个小工具。纯前端，单页，不需要服务器。
 
 ## 现在是什么状态
 
-算法层已经重写完毕：`core.js` 全是整数运算（金额用「分」，比例用「基点」，价格用「万分之一元」），
-35 条测试全绿，其中 4000 组是随机生成的输入。界面层 `app.js` 跟着改完了。
+v1.2.0，可以用了。两条分发路径：
 
-手机布局也做完了：窄屏（≤720px）下两张结果表变成一列卡片，输入框占满一行、字号 16px，
+- **Android**：`dist/资产再平衡计算器-v1.2.0.apk`（GitHub Releases 里有），侧载安装，没有地址栏
+- **网页**：GitHub Pages，可以「添加到桌面」当 PWA 用，断网也能开
+
+算法层 `core.js` 全是整数运算（金额用「分」，比例用「基点」，价格用「万分之一元」），
+51 条测试全绿，其中 4000 组是随机生成的输入。
+
+手机布局：窄屏（≤720px）下两张结果表变成一列卡片，输入框占满一行、字号 16px，
 按钮至少 44px 高；桌面端仍然是原来的表格，互不影响。
 
-还剩最后一步：打包成 Android APK（这样手机上才没有地址栏）。
+**数据只存在本机**（没有服务器、没有账号）。APK 里 `allowBackup="false"`，
+换手机或卸载重装会把数据全丢掉，所以 v1.2.0 加了「备份数据到文件 / 从备份文件恢复」：
+导出一份 `.json`，新手机上装好后导回去，输入过的五栏值一个不差。
 
 ## 测试
 
 ```bash
-node --test                 # 35 条逻辑测试，零依赖
+node --test                 # 51 条逻辑测试，零依赖
 node e2e/desktop.mjs        # 9 项真浏览器冒烟测试（桌面宽度）
 node e2e/mobile.mjs         # 6 项真浏览器冒烟测试（390 宽手机）
 node e2e/consent.mjs        # 5 项：首启隐私同意弹窗（用 CDP 伪造原生环境）
 node e2e/export.mjs         # 6 项：导出 Excel 的两条路（APK 走分享面板、网页走下载）
+node e2e/backup.mjs         # 10 项：备份/恢复的往返，以及选错文件、点取消都不改数据
 ```
 
-后四个需要先起静态服务器和调试版 Chrome，见 `e2e/README.md`。
+后五个需要先起静态服务器和调试版 Chrome，见 `e2e/README.md`。
 
 ## 已经修掉的已知问题
 
@@ -87,7 +95,7 @@ npm run android:apk     # 出包 → dist/rebalance-debug.apk
 ### 打正式包
 
 ```bash
-npm run android:apk:release     # → dist/归衡配比测算器-v<版本号>.apk
+npm run android:apk:release     # → dist/资产再平衡计算器-v<版本号>.apk
 ```
 
 和 `android:apk`（debug 包）的区别只有一个：签名。正式包用仓库外的密钥签名，
@@ -126,10 +134,10 @@ keyPassword=***
 
 ```bash
 BT=~/android-dev/sdk/build-tools/35.0.0
-$BT/apksigner verify --print-certs dist/归衡配比测算器-v1.1.0.apk   # 签名者不能是 CN=Android Debug
-$BT/zipalign -c -v 4 dist/归衡配比测算器-v1.1.0.apk               # 对齐
-$BT/aapt dump permissions dist/归衡配比测算器-v1.1.0.apk           # 不能有 INTERNET
-$BT/aapt dump badging dist/归衡配比测算器-v1.1.0.apk | head -3      # 版本号、应用名
+$BT/apksigner verify --print-certs dist/资产再平衡计算器-v1.2.0.apk   # 签名者不能是 CN=Android Debug
+$BT/zipalign -c -v 4 dist/资产再平衡计算器-v1.2.0.apk               # 对齐
+$BT/aapt dump permissions dist/资产再平衡计算器-v1.2.0.apk           # 不能有 INTERNET
+$BT/aapt dump badging dist/资产再平衡计算器-v1.2.0.apk | head -3      # 版本号、应用名
 ```
 
 ### 隐私合规
