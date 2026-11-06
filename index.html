@@ -263,17 +263,6 @@
         <button onclick="calculateRebalance()">开始计算再平衡并生成转换方案</button>
     </div>
 
-    <div class="section">
-        <h3>备份与恢复</h3>
-        <div class="controls">
-            <button onclick="exportBackup()">备份数据到文件</button>
-            <button onclick="pickBackupFile()">从备份文件恢复</button>
-            <input type="file" id="backupFileInput" accept=".json,application/json" hidden
-                   onchange="importBackupFromInput(this)">
-        </div>
-        <div class="tip">数据只存在这台设备上，换手机或卸载重装会全部丢失。换手机之前先点「备份数据到文件」，把得到的 .json 文件存到新手机能拿到的地方（微信传给自己、存进文件管理都行），装好软件后再点「从备份文件恢复」。</div>
-    </div>
-
     <div class="section" id="resultArea" style="display:none;">
         <h3><span class="tag-num">1</span>再平衡计算结果</h3>
         <div id="totalAsset"></div>
@@ -291,6 +280,18 @@
         <div style="margin-top:14px;">
             <button onclick="exportExcel('convert')">导出转换方案到 Excel</button>
         </div>
+    </div>
+
+    <!-- 备份与恢复放在最后：备份是低频操作，不该挡在结果表前面 -->
+    <div class="section">
+        <h3>备份与恢复</h3>
+        <div class="controls">
+            <button onclick="exportBackup()">备份数据到文件</button>
+            <button onclick="pickBackupFile()">从备份文件恢复</button>
+            <input type="file" id="backupFileInput" accept=".json,application/json" hidden
+                   onchange="importBackupFromInput(this)">
+        </div>
+        <div class="tip">数据只存在这台设备上，换手机或卸载重装会全部丢失。换手机之前先点「备份数据到文件」，把得到的 .json 文件存到新手机能拿到的地方（微信传给自己、存进文件管理都行），装好软件后再点「从备份文件恢复」。</div>
     </div>
 
     <!-- XLSX 库 -->
