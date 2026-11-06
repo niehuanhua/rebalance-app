@@ -4,9 +4,9 @@
 
 ## 现在是什么状态
 
-v1.2.0，可以用了。两条分发路径：
+v1.2.1，可以用了。两条分发路径：
 
-- **Android**：`dist/资产再平衡计算器-v1.2.0.apk`（GitHub Releases 里有），侧载安装，没有地址栏
+- **Android**：`dist/资产再平衡计算器-v1.2.1.apk`（GitHub Releases 里有），侧载安装，没有地址栏
 - **网页**：GitHub Pages，可以「添加到桌面」当 PWA 用，断网也能开
 
 算法层 `core.js` 全是整数运算（金额用「分」，比例用「基点」，价格用「万分之一元」），
@@ -134,10 +134,10 @@ keyPassword=***
 
 ```bash
 BT=~/android-dev/sdk/build-tools/35.0.0
-$BT/apksigner verify --print-certs dist/资产再平衡计算器-v1.2.0.apk   # 签名者不能是 CN=Android Debug
-$BT/zipalign -c -v 4 dist/资产再平衡计算器-v1.2.0.apk               # 对齐
-$BT/aapt dump permissions dist/资产再平衡计算器-v1.2.0.apk           # 不能有 INTERNET
-$BT/aapt dump badging dist/资产再平衡计算器-v1.2.0.apk | head -3      # 版本号、应用名
+$BT/apksigner verify --print-certs dist/资产再平衡计算器-v1.2.1.apk   # 签名者不能是 CN=Android Debug
+$BT/zipalign -c -v 4 dist/资产再平衡计算器-v1.2.1.apk               # 对齐
+$BT/aapt dump permissions dist/资产再平衡计算器-v1.2.1.apk           # 不能有 INTERNET
+$BT/aapt dump badging dist/资产再平衡计算器-v1.2.1.apk | head -3      # 版本号、应用名
 ```
 
 ### 隐私合规
